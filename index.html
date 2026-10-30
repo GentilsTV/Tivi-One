@@ -853,7 +853,7 @@
             if (selectedIndex < filteredChannels.length - 1) { selectedIndex++; updateSelection(); playStream(filteredChannels[selectedIndex]); }
         });
 
-        fn toggleFavorite(url) {
+        function toggleFavorite(url) {
             let favorites = JSON.parse(localStorage.getItem("tivione_favorites")) || [];
             if (favorites.includes(url)) {
                 favorites = favorites.filter(fav => fav !== url);
