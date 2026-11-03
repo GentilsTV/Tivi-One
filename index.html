@@ -474,7 +474,7 @@
 
     <script>
         const WHATSAPP_NUMBER = "2250574785813";
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwts6xdz5Wg_8fLnC6Q58oxbZYCmIDwOHpzHfEX6J5N5VEGQwrVj89tBFDQjYdCyJc/exec";
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz_Ctu6g-bxLienRJyR1Slp-t5jQVPg_ruHuqx6gh_NEcSXu2yJwQ87J3aRn_-WKjeo/exec";
         const M3U_URL = "https://iptv-org.github.io/iptv/languages/fra.m3u";
 
         let allChannels = [
@@ -542,15 +542,30 @@
                 : "🎁 Espace Parrainage (Gagnez 7%) ▼";
         });
 
-        btnWhatsapp.addEventListener("click", () => {
+        btnWhatsapp.addEventListener("click", async () => {
             const pseudo = usernameInput.value.trim();
             if (pseudo === "") {
                 alert("Veuillez entrer votre pseudo ou nom.");
                 return;
             }
             localStorage.setItem("tivione_username", pseudo);
-            let parrain = localStorage.getItem("tivione_referred_by") || "Aucun";
-            const message = `Bonjour, je viens d'effectuer mon paiement Wave pour TiviOne. Mon pseudo est : ${pseudo}. Parrainé par : ${parrain}. J'attends mon code VIP unique.`;
+            let parrain = localStorage.getItem("tivione_referred_by") || "";
+
+            btnWhatsapp.textContent = "Enregistrement...";
+            btnWhatsapp.disabled = true;
+
+            try {
+                // Enregistrement automatique dans Google Sheets / AppSheet avec le parrain
+                await fetch(`${SCRIPT_URL}?action=register&username=${encodeURIComponent(pseudo)}&parrain=${encodeURIComponent(parrain)}`);
+            } catch (error) {
+                console.error("Erreur d'enregistrement:", error);
+            } finally {
+                btnWhatsapp.textContent = "Valider mon paiement sur WhatsApp";
+                btnWhatsapp.disabled = false;
+            }
+
+            let displayParrain = parrain || "Aucun";
+            const message = `Bonjour, je viens d'effectuer mon paiement Wave pour TiviOne. Mon pseudo est : ${pseudo}. Parrainé par : ${displayParrain}. J'attends mon code VIP unique.`;
             window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`, "_blank");
         });
 
