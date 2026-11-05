@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>TiviOne - IPTV Player</title>
+    <!-- Liaison du manifeste pour corriger l'erreur d'installation PWA -->
+    <link rel="manifest" href="manifest.json">
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
@@ -211,7 +213,7 @@
         let currentGroup = 'Toutes les Chaînes';
         let groupIndex = 0;
         let channelIndex = 0;
-        let currentFocus = 'channels'; // 'groups' ou 'channels'
+        let currentFocus = 'channels';
 
         window.addEventListener("DOMContentLoaded", () => {
             const urlParams = new URLSearchParams(window.location.search);
@@ -295,7 +297,6 @@
             document.getElementById("setup-screen").classList.remove("hidden");
         }
 
-        // Ajout M3U avec choix du nom de dossier/catégorie
         function addNewList() {
             let folderName = prompt("Nom du dossier pour classer ces chaînes (ex: Mes Films, Sport VIP...) :");
             if (!folderName) return;
@@ -348,7 +349,6 @@
             const groupsList = document.getElementById("groups-list");
             groupsList.innerHTML = '';
             
-            // Ajout dynamique de l'onglet Favoris en haut
             const groups = ['Toutes les Chaînes', '⭐ Favoris', ...new Set(allChannels.map(c => c.group))];
 
             groups.forEach((group, index) => {
@@ -404,7 +404,6 @@
                     <div class="fav-star" title="Ajouter aux favoris">${isFav ? '⭐' : '☆'}</div>
                 `;
 
-                // Clic pour lancer la chaîne
                 row.addEventListener('click', () => {
                     channelIndex = index;
                     document.querySelectorAll('.channel-row').forEach(r => r.classList.remove('selected'));
@@ -412,18 +411,16 @@
                     playStream(channel);
                 });
 
-                // Double clic pour plein écran
                 row.addEventListener('dblclick', () => {
                     playStream(channel);
                     toggleFullscreen();
                 });
 
-                // Gestion de l'étoile favoris
                 const starBtn = row.querySelector('.fav-star');
                 starBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     toggleFavorite(channel.url);
-                    renderChannels(groupName); // Rafraîchir l'affichage
+                    renderChannels(groupName);
                 });
 
                 container.appendChild(row);
@@ -450,20 +447,38 @@
             document.getElementById('current-desc').textContent = `Groupe : ${channel.group}`;
             document.getElementById('current-time').textContent = "En direct";
 
+            if (hls) {
+                hls.destroy();
+                hls = null;
+            }
+
             if (Hls.isSupported() && channel.url.includes('.m3u8')) {
-                if (hls) { hls.destroy(); }
-                hls = new Hls();
+                hls = new Hls({
+                    xhrSetup: function (xhr, url) {
+                        xhr.withCredentials = false;
+                    }
+                });
                 hls.loadSource(channel.url);
                 hls.attachMedia(player);
                 hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                    player.play().catch(err => console.log("Lecture automatique bloquée"));
+                    player.play().catch(err => {
+                        console.log("Lecture automatique bloquée par la TV, tentative manuelle", err);
+                    });
+                });
+                hls.on(Hls.Events.ERROR, function (event, data) {
+                    if (data.fatal) {
+                        player.src = channel.url;
+                        player.play().catch(e => alert("Impossible de lire ce flux sur ce téléviseur."));
+                    }
                 });
             } else if (player.canPlayType('application/vnd.apple.mpegurl')) {
                 player.src = channel.url;
-                player.play().catch(err => console.log("Lecture automatique bloquée"));
+                player.play().catch(err => console.log("Erreur lecture native iOS/Safari"));
             } else {
                 player.src = channel.url;
-                player.play().catch(err => console.log("Lecture en attente de flux"));
+                player.play().catch(err => {
+                    alert("Ce flux n'est pas compatible avec le lecteur.");
+                });
             }
         }
 
@@ -473,10 +488,11 @@
                 elem.requestFullscreen();
             } else if (elem.webkitRequestFullscreen) {
                 elem.webkitRequestFullscreen();
+            } else if (elem.msRequestFullscreen) {
+                elem.msRequestFullscreen();
             }
         }
 
-        // Navigation Télécommande / D-Pad
         window.addEventListener('keydown', (e) => {
             const groups = document.querySelectorAll('.cat-item');
             const channels = document.querySelectorAll('.channel-row');
@@ -538,7 +554,6 @@
                    document.getElementById("settings-modal").classList.contains("hidden");
         }
 
-        // Paramètres & Parrainage
         function openSettings() {
             let username = localStorage.getItem("tivione_username") || "Utilisateur";
             let appUrl = window.location.origin + window.location.pathname;
