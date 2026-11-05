@@ -437,6 +437,7 @@
             localStorage.setItem("tivione_favorites", JSON.stringify(favorites));
         }
 
+        // --- CODE OPTIMISÉ POUR LA LECTURE DES FLUX SUR TÉLÉVISEUR & MOBILE ---
         function playStream(channel) {
             if (channel.isWeb) {
                 window.open(channel.url, "_blank");
@@ -452,32 +453,55 @@
                 hls = null;
             }
 
+            // Vérification intelligente et compatible TV / Box Android / Navigateur
             if (Hls.isSupported() && channel.url.includes('.m3u8')) {
                 hls = new Hls({
+                    maxBufferLength: 30,
+                    maxMaxBufferLength: 60,
+                    enableWorker: true,
                     xhrSetup: function (xhr, url) {
-                        xhr.withCredentials = false;
+                        xhr.withCredentials = false; // Contournement CORS indispensable sur TV
                     }
                 });
+
                 hls.loadSource(channel.url);
                 hls.attachMedia(player);
+
                 hls.on(Hls.Events.MANIFEST_PARSED, () => {
                     player.play().catch(err => {
-                        console.log("Lecture automatique bloquée par la TV, tentative manuelle", err);
+                        console.log("Lecture automatique bloquée par le système TV :", err);
                     });
                 });
+
+                // Récupération automatique en cas de coupure ou d'erreur réseau sur la TV
                 hls.on(Hls.Events.ERROR, function (event, data) {
                     if (data.fatal) {
-                        player.src = channel.url;
-                        player.play().catch(e => alert("Impossible de lire ce flux sur ce téléviseur."));
+                        console.warn("Erreur critique du flux, tentative de récupération...", data);
+                        switch (data.type) {
+                            case Hls.ErrorTypes.NETWORK_ERROR:
+                                hls.startLoad();
+                                break;
+                            case Hls.ErrorTypes.MEDIA_ERROR:
+                                hls.recoverMediaError();
+                                break;
+                            default:
+                                hls.destroy();
+                                // Fallback ultime sur la lecture native si HLS échoue
+                                player.src = channel.url;
+                                player.play().catch(e => console.log("Échec du fallback direct"));
+                                break;
+                        }
                     }
                 });
             } else if (player.canPlayType('application/vnd.apple.mpegurl')) {
+                // Lecture native pour Safari / iOS / Apple TV
                 player.src = channel.url;
-                player.play().catch(err => console.log("Erreur lecture native iOS/Safari"));
+                player.play().catch(err => console.log("Erreur lecture native iOS"));
             } else {
+                // Lecture directe flux standard (MP4 / Flux direct TV)
                 player.src = channel.url;
                 player.play().catch(err => {
-                    alert("Ce flux n'est pas compatible avec le lecteur.");
+                    console.log("Erreur flux direct standard");
                 });
             }
         }
