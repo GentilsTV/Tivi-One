@@ -35,8 +35,6 @@
             border-radius: 8px; cursor: pointer; text-align: left; font-size: 0.75rem; text-decoration: none; display: block; transition: 0.2s;
         }
         .sub-btn span { display: block; color: #0085ff; font-weight: bold; font-size: 0.85rem; }
-        .sub-btn.orange-btn { border-color: #ff7900; }
-        .sub-btn.orange-btn span { color: #ff7900; }
         .sub-btn:hover { background: rgba(255,255,255,0.1); }
 
         .input-group { margin-bottom: 8px; text-align: left; }
@@ -54,10 +52,10 @@
             font-weight: bold; border-radius: 8px; cursor: pointer; color: #fff; font-size: 0.85rem; 
         }
 
-        /* --- INTERFACE PRINCIPALE (PC / TV) --- */
+        /* --- INTERFACE PRINCIPALE (STYLE TIVIMATE / TV) --- */
         #main-app {
             display: none; width: 100%; height: 100%; 
-            grid-template-columns: 240px 1fr; 
+            grid-template-columns: 260px 1fr; 
             grid-template-rows: 150px 1fr; 
             background: #0c0e12;
         }
@@ -74,7 +72,7 @@
         .icon-btn { background: #1c2230; color: #00d2ff; border: 1px solid #2d3342; padding: 4px 6px; border-radius: 6px; font-size: 0.7rem; cursor: pointer; font-weight: bold; }
         
         .cat-list { list-style: none; margin-top: 5px; }
-        .cat-item { padding: 8px 15px; cursor: pointer; font-size: 0.8rem; color: #a0a6b8; transition: 0.2s; }
+        .cat-item { padding: 10px 15px; cursor: pointer; font-size: 0.85rem; color: #a0a6b8; transition: 0.2s; }
         .cat-item:hover, .cat-item.focused, .cat-item.active { background: #1c2230; color: #00d2ff; border-left: 4px solid #00d2ff; font-weight: bold; }
 
         #top-preview-panel {
@@ -82,17 +80,63 @@
             grid-row: 1; 
             background: #141822; border-bottom: 1px solid #222736;
             display: flex; padding: 10px; gap: 12px; align-items: center; overflow: hidden;
+            position: relative;
         }
-        
-        /* Conteneur vidéo global mis en valeur pour le plein écran TV */
-        #video-container-wrapper {
-            display: flex; gap: 12px; align-items: center; width: 100%;
-        }
+
+        /* --- CONTENEUR VIDÉO & MODE PLEIN ÉCRAN SUPERPOSÉ (STYLE TIVIMATE) --- */
         #video-box {
-            width: 220px; height: 125px; background: #000; border-radius: 6px; overflow: hidden; flex-shrink: 0; border: 2px solid #ff6600; position: relative; cursor: pointer;
+            width: 220px; height: 125px; background: #000; border-radius: 6px; overflow: hidden; flex-shrink: 0; border: 1px solid #2d3342; position: relative; cursor: pointer;
+            transition: all 0.3s ease;
         }
         #video-box video { width: 100%; height: 100%; object-fit: cover; background: #000; }
-        
+
+        /* Plein écran forcé avec menu OSD transparent par-dessus la vidéo */
+        #video-box.fullscreen-mode {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            max-width: none !important;
+            max-height: none !important;
+            z-index: 99999 !important;
+            border: none !important;
+            border-radius: 0 !important;
+            background: #000 !important;
+        }
+        #video-box.fullscreen-mode video {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: contain !important;
+        }
+
+        /* Menu OSD superposé en mode plein écran (comme sur la 2ème capture) */
+        .osd-overlay-menu {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 320px;
+            height: 100%;
+            background: rgba(12, 14, 18, 0.85);
+            backdrop-filter: blur(8px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 100000;
+            display: none;
+            flex-direction: column;
+            padding: 15px;
+            overflow-y: auto;
+            transition: transform 0.3s ease;
+        }
+        #video-box.fullscreen-mode .osd-overlay-menu.visible {
+            display: flex;
+        }
+        .osd-title { font-size: 1rem; color: #ff6600; font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 6px; }
+        .osd-channel-item {
+            padding: 10px; margin-bottom: 6px; background: rgba(28, 35, 51, 0.7); border-radius: 6px;
+            cursor: pointer; font-size: 0.85rem; color: #fff; border: 1px solid transparent; display: flex; justify-content: space-between; align-items: center;
+        }
+        .osd-channel-item:hover, .osd-channel-item.active { background: rgba(0, 210, 255, 0.2); border-color: #00d2ff; }
+
         .preview-info { flex: 1; min-width: 0; }
         .preview-info h2 { font-size: 1.1rem; color: #fff; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .preview-info p { color: #8c92a4; font-size: 0.75rem; margin-bottom: 4px; }
@@ -101,8 +145,8 @@
         .time-badge { display: inline-block; background: #1c2230; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; color: #00d2ff; }
         
         .fullscreen-btn {
-            background: #ff6600; color: #fff; border: none; padding: 6px 14px; border-radius: 6px;
-            font-size: 0.8rem; font-weight: bold; cursor: pointer; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            background: #ff6600; color: #fff; border: none; padding: 5px 10px; border-radius: 6px;
+            font-size: 0.75rem; font-weight: bold; cursor: pointer; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.3);
         }
         .fullscreen-btn:hover { background: #ff8533; }
 
@@ -121,31 +165,15 @@
         .channel-program { flex: 1; padding: 8px 12px; color: #8c92a4; font-size: 0.75rem; border-left: 1px solid #1f2533; }
         .fav-star { padding: 0 12px; font-size: 1rem; color: #f59e0b; cursor: pointer; }
 
-        /* --- CORRECTION MOBILE & TABLETTES --- */
-        @media screen and (max-width: 900px) {
+        /* --- ADAPTATION PAYSAGE & MOBILE FLUIDE --- */
+        @media screen and (max-width: 900px), screen and (orientation: landscape) and (max-height: 600px) {
             #main-app {
-                display: flex !important;
-                flex-direction: column;
-                height: 100vh;
-                overflow-y: auto;
+                grid-template-columns: 200px 1fr;
+                grid-template-rows: 120px 1fr;
             }
-            #top-preview-panel {
-                order: 1; width: 100%; height: auto; padding: 10px; flex-shrink: 0;
-            }
-            #video-container-wrapper { flex-direction: column; align-items: stretch; }
-            #video-box { width: 100%; height: 180px; }
-            
-            #sidebar-categories {
-                order: 2; width: 100%; height: 50px; min-height: 50px;
-                flex-direction: row; overflow-x: auto; overflow-y: hidden;
-                border-right: none; border-bottom: 1px solid #222736; flex-shrink: 0;
-            }
-            .cat-logo { display: none; }
-            .cat-list { display: flex; margin-top: 0; }
-            .cat-item { white-space: nowrap; padding: 12px 15px; border-left: none !important; border-bottom: 3px solid transparent; }
-            .cat-item.active { border-bottom: 3px solid #00d2ff; background: #1c2230; }
-
-            #epg-grid-panel { order: 3; width: 100%; flex: 1; overflow-y: visible; }
+            #top-preview-panel { padding: 6px; gap: 8px; }
+            #video-box { width: 150px; height: 90px; }
+            .preview-info h2 { font-size: 0.95rem; }
         }
 
         /* Modal Paramètres & Parrainage */
@@ -183,14 +211,6 @@
                 <a href="https://pay.wave.com/m/M_dQNxOa48-kSX/c/ci/?amount=40000" target="_blank" class="sub-btn">12 Mois<span>40 000 F</span></a>
             </div>
 
-            <div class="payment-section-title">🟠 Paiement via ORANGE MONEY :</div>
-            <div class="sub-grid">
-                <a href="https://multi.app.orange-money.com/app/v1/kapptivate/qrcode/odyssee/?id=codgen72-98a11349f3c14df3b669786458cbe8ed&v=1&amount=3500" target="_blank" class="sub-btn orange-btn">1 Mois<span>3 500 F</span></a>
-                <a href="https://multi.app.orange-money.com/app/v1/kapptivate/qrcode/odyssee/?id=codgen72-98a11349f3c14df3b669786458cbe8ed&v=1&amount=10500" target="_blank" class="sub-btn orange-btn">3 Mois<span>10 500 F</span></a>
-                <a href="https://multi.app.orange-money.com/app/v1/kapptivate/qrcode/odyssee/?id=codgen72-98a11349f3c14df3b669786458cbe8ed&v=1&amount=21000" target="_blank" class="sub-btn orange-btn">6 Mois<span>21 000 F</span></a>
-                <a href="https://multi.app.orange-money.com/app/v1/kapptivate/qrcode/odyssee/?id=codgen72-98a11349f3c14df3b669786458cbe8ed&v=1&amount=40000" target="_blank" class="sub-btn orange-btn">12 Mois<span>40 000 F</span></a>
-            </div>
-
             <div class="input-group">
                 <label>Déjà payé ? Entrez votre Pseudo :</label>
                 <input type="text" id="username-input" placeholder="Votre nom / pseudo" />
@@ -205,25 +225,9 @@
         </div>
     </div>
 
-    <!-- INTERFACE PRINCIPALE -->
+    <!-- INTERFACE PRINCIPALE (STYLE TIVIMATE) -->
     <div id="main-app">
-        <div id="top-preview-panel">
-            <div id="video-container-wrapper">
-                <!-- ID unique pour forcer le plein écran sur Smart TV -->
-                <div id="video-box" onclick="toggleFullscreen()" title="Cliquez pour agrandir">
-                    <video id="iptv-player" autoplay playsinline></video>
-                </div>
-                <div class="preview-info">
-                    <h2 id="current-title">Sélectionnez une chaîne</h2>
-                    <p id="current-desc">Guide des programmes en direct</p>
-                    <div class="player-actions-row">
-                        <div class="time-badge" id="current-time">En direct</div>
-                        <button class="fullscreen-btn" onclick="toggleFullscreen()">📺 Plein Écran TV</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
+        <!-- 1. Menu des Catégories à gauche -->
         <div id="sidebar-categories">
             <div class="cat-logo">
                 <span>tivione</span>
@@ -235,6 +239,28 @@
             <ul id="groups-list" class="cat-list"></ul>
         </div>
 
+        <!-- 2. Panneau Vidéo en haut à droite avec menu OSD superposé -->
+        <div id="top-preview-panel">
+            <div id="video-box" onclick="toggleOsdMenu(event)" title="Cliquez pour afficher/masquer le menu des chaînes">
+                <video id="iptv-player" controls autoplay playsinline></video>
+                
+                <!-- MENU OSD SUPERPOSÉ (STYLE TIVI MATE EN PLEIN ÉCRAN) -->
+                <div id="osd-menu" class="osd-overlay-menu" onclick="event.stopPropagation()">
+                    <div class="osd-title">📺 Changer de chaîne</div>
+                    <div id="osd-channels-list"></div>
+                </div>
+            </div>
+            <div class="preview-info">
+                <h2 id="current-title">Sélectionnez une chaîne</h2>
+                <p id="current-desc">Guide des programmes en direct</p>
+                <div class="player-actions-row">
+                    <div class="time-badge" id="current-time">En direct</div>
+                    <button class="fullscreen-btn" onclick="toggleFullscreen()">📺 Plein Écran</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Grille des Chaînes en bas à droite -->
         <div id="epg-grid-panel">
             <div id="channels-container"></div>
         </div>
@@ -270,16 +296,6 @@
         let channelIndex = 0;
         let currentFocus = 'channels';
 
-        // Génération ou récupération d'un Device ID unique (Max 3 appareils)
-        function getDeviceId() {
-            let deviceId = localStorage.getItem("tivione_device_id");
-            if (!deviceId) {
-                deviceId = 'dev_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
-                localStorage.setItem("tivione_device_id", deviceId);
-            }
-            return deviceId;
-        }
-
         window.addEventListener("DOMContentLoaded", () => {
             const urlParams = new URLSearchParams(window.location.search);
             const refParam = urlParams.get("ref");
@@ -301,8 +317,7 @@
             if (!pseudo) { alert("Veuillez entrer votre pseudo."); return; }
             localStorage.setItem("tivione_username", pseudo);
             let parrain = localStorage.getItem("tivione_referred_by") || "Aucun";
-            let deviceId = getDeviceId();
-            const message = `Bonjour, je viens d'effectuer mon paiement pour TiviOne.\n- Pseudo : ${pseudo}\n- Appareil ID : ${deviceId}\n- Parrain : ${parrain}\nJ'attends mon code VIP.`;
+            const message = `Bonjour, je viens d'effectuer mon paiement Wave pour TiviOne. Mon pseudo : ${pseudo}. Parrain : ${parrain}. J'attends mon code VIP.`;
             window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`, "_blank");
         });
 
@@ -315,8 +330,7 @@
             btnActivate.disabled = true;
 
             try {
-                let deviceId = getDeviceId();
-                const response = await fetch(`${SCRIPT_URL}?code=${encodeURIComponent(codeEntered)}&device_id=${encodeURIComponent(deviceId)}`);
+                const response = await fetch(`${SCRIPT_URL}?code=${encodeURIComponent(codeEntered)}`);
                 const result = await response.json();
 
                 if (result.status === "success") {
@@ -325,7 +339,7 @@
                     localStorage.setItem("tivione_vip", "true");
                     localStorage.setItem("tivione_expiry", expiryTime);
                     localStorage.setItem("tivione_active_code", codeEntered);
-                    alert(`Activation réussie (${result.devices_count}/3 appareils connectés) !`);
+                    alert(`Activation réussie pour ${daysDuration} jours !`);
                     showApp();
                 } else {
                     alert("Erreur : " + (result.message || "Code incorrect"));
@@ -392,6 +406,7 @@
                 console.error("Erreur M3U:", error);
             }
             renderGroups();
+            renderOsdChannels();
             if (allChannels.length > 0 && !player.src) playStream(allChannels[0]);
         }
 
@@ -468,6 +483,23 @@
             });
         }
 
+        // Remplit la liste latérale superposée (OSD) en plein écran
+        function renderOsdChannels() {
+            const osdContainer = document.getElementById('osd-channels-list');
+            osdContainer.innerHTML = '';
+            allChannels.forEach((channel) => {
+                const item = document.createElement('div');
+                item.className = 'osd-channel-item';
+                item.innerHTML = `<span>${channel.name}</span>`;
+                item.addEventListener('click', () => {
+                    playStream(channel);
+                    // Masque le menu après sélection de la chaîne
+                    document.getElementById('osd-menu').classList.remove('visible');
+                });
+                osdContainer.appendChild(item);
+            });
+        }
+
         function toggleFavorite(channelUrl) {
             let favorites = JSON.parse(localStorage.getItem("tivione_favorites")) || [];
             if (favorites.includes(channelUrl)) favorites = favorites.filter(url => url !== channelUrl);
@@ -510,29 +542,33 @@
             }
         }
 
-        // --- PLEIN ÉCRAN OPTIMISÉ SMART TV & TOUS SUPPORTS ---
+        // --- GESTION DU PLEIN ÉCRAN & DU MENU OSD SUPÉRIEUR ---
         function toggleFullscreen() {
-            // On cible l'élément vidéo ou son conteneur principal pour forcer le plein écran TV
-            let target = document.getElementById('video-box');
-            let doc = document;
-
-            if (!doc.fullscreenElement && !doc.webkitFullscreenElement && !doc.msRequestFullscreen) {
-                if (target.requestFullscreen) {
-                    target.requestFullscreen().catch(err => {
-                        // Fallback direct sur la balise vidéo si le conteneur est bloqué
-                        player.requestFullscreen();
-                    });
-                } else if (target.webkitRequestFullscreen) {
-                    target.webkitRequestFullscreen();
-                } else if (player.webkitEnterFullscreen) { /* Spécifique iPhone/iPad */
+            let videoBox = document.getElementById('video-box');
+            
+            if (!videoBox.classList.contains('fullscreen-mode')) {
+                videoBox.classList.add('fullscreen-mode');
+                if (videoBox.requestFullscreen) {
+                    videoBox.requestFullscreen().catch(() => {});
+                } else if (player.webkitEnterFullscreen) {
                     player.webkitEnterFullscreen();
                 }
             } else {
-                if (doc.exitFullscreen) {
-                    doc.exitFullscreen();
-                } else if (doc.webkitExitFullscreen) {
-                    doc.webkitExitFullscreen();
+                videoBox.classList.remove('fullscreen-mode');
+                document.getElementById('osd-menu').classList.remove('visible');
+                if (document.exitFullscreen) {
+                    document.exitFullscreen().catch(() => {});
                 }
+            }
+        }
+
+        // Ouvre ou ferme le menu des chaînes en surimpression en mode plein écran
+        function toggleOsdMenu(event) {
+            let videoBox = document.getElementById('video-box');
+            let osdMenu = document.getElementById('osd-menu');
+            
+            if (videoBox.classList.contains('fullscreen-mode')) {
+                osdMenu.classList.toggle('visible');
             }
         }
 
