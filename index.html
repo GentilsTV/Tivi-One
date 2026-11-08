@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TiviOne - IPTV Player</title>
-    <!-- Liaison du manifeste PWA -->
+    <title>TiviOne - IPTV Player TV</title>
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <style>
@@ -26,7 +25,8 @@
             border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 15px 35px rgba(0,0,0,0.8);
         }
         .setup-box h1 { color: #ff6600; margin-bottom: 5px; font-size: 2rem; font-weight: 800; }
-        .promo-banner { color: #ffaa00; font-size: 0.8rem; margin-bottom: 12px; font-weight: bold; }
+        .promo-banner { color: #ffaa00; font-size: 0.8rem; margin-bottom: 4px; font-weight: bold; }
+        .promo-sub { color: #00d2ff; font-size: 0.75rem; margin-bottom: 12px; font-weight: 500; }
         
         .payment-section-title { font-size: 0.85rem; color: #00d2ff; margin: 8px 0 4px 0; text-align: left; font-weight: bold; }
         .sub-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-bottom: 8px; }
@@ -83,14 +83,13 @@
             position: relative;
         }
 
-        /* --- CONTENEUR VIDÉO & MODE PLEIN ÉCRAN SUPERPOSÉ (STYLE TIVIMATE) --- */
+        /* --- CONTENEUR VIDÉO & PLEIN ÉCRAN --- */
         #video-box {
             width: 220px; height: 125px; background: #000; border-radius: 6px; overflow: hidden; flex-shrink: 0; border: 1px solid #2d3342; position: relative; cursor: pointer;
             transition: all 0.3s ease;
         }
         #video-box video { width: 100%; height: 100%; object-fit: cover; background: #000; }
 
-        /* Plein écran forcé avec menu OSD transparent par-dessus la vidéo */
         #video-box.fullscreen-mode {
             position: fixed !important;
             top: 0 !important;
@@ -110,32 +109,60 @@
             object-fit: contain !important;
         }
 
-        /* Menu OSD superposé en mode plein écran (comme sur la 2ème capture) */
+        /* --- MENU OSD SEMI-TRANSPARENT (VIDÉO VISIBLE EN ARRIÈRE-PLAN) --- */
         .osd-overlay-menu {
             position: absolute;
             top: 0;
             left: 0;
-            width: 320px;
+            width: 360px;
             height: 100%;
-            background: rgba(12, 14, 18, 0.85);
-            backdrop-filter: blur(8px);
-            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(12, 14, 18, 0.65); /* Fond semi-transparent */
+            backdrop-filter: blur(12px); /* Effet de flou de style TV moderne */
+            -webkit-backdrop-filter: blur(12px);
+            border-right: 1px solid rgba(255, 255, 255, 0.15);
             z-index: 100000;
             display: none;
             flex-direction: column;
             padding: 15px;
             overflow-y: auto;
-            transition: transform 0.3s ease;
         }
         #video-box.fullscreen-mode .osd-overlay-menu.visible {
             display: flex;
         }
-        .osd-title { font-size: 1rem; color: #ff6600; font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 6px; }
-        .osd-channel-item {
-            padding: 10px; margin-bottom: 6px; background: rgba(28, 35, 51, 0.7); border-radius: 6px;
-            cursor: pointer; font-size: 0.85rem; color: #fff; border: 1px solid transparent; display: flex; justify-content: space-between; align-items: center;
+        .osd-title { 
+            font-size: 0.95rem; color: #ff6600; font-weight: bold; margin-bottom: 10px; 
+            border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 6px; 
+            display: flex; justify-content: space-between; align-items: center; 
         }
-        .osd-channel-item:hover, .osd-channel-item.active { background: rgba(0, 210, 255, 0.2); border-color: #00d2ff; }
+        .osd-channel-item {
+            padding: 9px 12px; margin-bottom: 6px; background: rgba(20, 25, 38, 0.75); border-radius: 6px;
+            cursor: pointer; font-size: 0.82rem; color: #fff; border: 1px solid rgba(255,255,255,0.08); 
+            display: flex; justify-content: space-between; align-items: center; transition: 0.15s;
+        }
+        .osd-channel-item:hover, .osd-channel-item.focused, .osd-channel-item.active { 
+            background: rgba(0, 210, 255, 0.35); border-color: #00d2ff; font-weight: bold; 
+        }
+
+        /* Bouton discret en haut à gauche sur la vidéo en plein écran */
+        .osd-toggle-btn {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            background: rgba(0, 0, 0, 0.45);
+            color: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            z-index: 100001;
+            display: none;
+            transition: 0.2s;
+        }
+        .osd-toggle-btn:hover { background: rgba(0, 0, 0, 0.75); color: #fff; }
+        #video-box.fullscreen-mode .osd-toggle-btn {
+            display: block;
+        }
 
         .preview-info { flex: 1; min-width: 0; }
         .preview-info h2 { font-size: 1.1rem; color: #fff; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -165,17 +192,6 @@
         .channel-program { flex: 1; padding: 8px 12px; color: #8c92a4; font-size: 0.75rem; border-left: 1px solid #1f2533; }
         .fav-star { padding: 0 12px; font-size: 1rem; color: #f59e0b; cursor: pointer; }
 
-        /* --- ADAPTATION PAYSAGE & MOBILE FLUIDE --- */
-        @media screen and (max-width: 900px), screen and (orientation: landscape) and (max-height: 600px) {
-            #main-app {
-                grid-template-columns: 200px 1fr;
-                grid-template-rows: 120px 1fr;
-            }
-            #top-preview-panel { padding: 6px; gap: 8px; }
-            #video-box { width: 150px; height: 90px; }
-            .preview-info h2 { font-size: 0.95rem; }
-        }
-
         /* Modal Paramètres & Parrainage */
         #settings-modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -202,6 +218,7 @@
         <div class="setup-box">
             <h1>TiviOne</h1>
             <div class="promo-banner">🎁 REGARDEZ, PARRAINEZ ET ENCAISSEZ 7% !</div>
+            <div class="promo-sub">Profiter de plus de 1500 chaînes peu importe l'abonnement.</div>
             
             <div class="payment-section-title">🔵 Paiement via WAVE :</div>
             <div class="sub-grid">
@@ -239,14 +256,17 @@
             <ul id="groups-list" class="cat-list"></ul>
         </div>
 
-        <!-- 2. Panneau Vidéo en haut à droite avec menu OSD superposé -->
+        <!-- 2. Panneau Vidéo en haut à droite avec menu OSD transparent -->
         <div id="top-preview-panel">
-            <div id="video-box" onclick="toggleOsdMenu(event)" title="Cliquez pour afficher/masquer le menu des chaînes">
+            <div id="video-box" onclick="toggleOsdMenu()" title="Cliquez pour afficher les chaînes">
                 <video id="iptv-player" controls autoplay playsinline></video>
                 
-                <!-- MENU OSD SUPERPOSÉ (STYLE TIVI MATE EN PLEIN ÉCRAN) -->
+                <!-- Bouton discret en haut à gauche sur la vidéo en plein écran -->
+                <button class="osd-toggle-btn" onclick="toggleOsdMenu(event)">📺 Chaînes</button>
+
+                <!-- MENU OSD SEMI-TRANSPARENT (Zapping en direct) -->
                 <div id="osd-menu" class="osd-overlay-menu" onclick="event.stopPropagation()">
-                    <div class="osd-title">📺 Changer de chaîne</div>
+                    <div class="osd-title"><span>📺 Chaînes</span><span style="font-size:0.65rem; color:#00d2ff;">(▲▼ Naviguer)</span></div>
                     <div id="osd-channels-list"></div>
                 </div>
             </div>
@@ -295,6 +315,7 @@
         let groupIndex = 0;
         let channelIndex = 0;
         let currentFocus = 'channels';
+        let osdIndex = 0;
 
         window.addEventListener("DOMContentLoaded", () => {
             const urlParams = new URLSearchParams(window.location.search);
@@ -483,17 +504,16 @@
             });
         }
 
-        // Remplit la liste latérale superposée (OSD) en plein écran
         function renderOsdChannels() {
             const osdContainer = document.getElementById('osd-channels-list');
             osdContainer.innerHTML = '';
-            allChannels.forEach((channel) => {
+            allChannels.forEach((channel, idx) => {
                 const item = document.createElement('div');
-                item.className = 'osd-channel-item';
-                item.innerHTML = `<span>${channel.name}</span>`;
+                item.className = idx === 0 ? 'osd-channel-item active' : 'osd-channel-item';
+                item.innerHTML = `<span>${idx + 1}. ${channel.name}</span>`;
                 item.addEventListener('click', () => {
+                    osdIndex = idx;
                     playStream(channel);
-                    // Masque le menu après sélection de la chaîne
                     document.getElementById('osd-menu').classList.remove('visible');
                 });
                 osdContainer.appendChild(item);
@@ -520,7 +540,9 @@
 
             if (Hls.isSupported() && channel.url.includes('.m3u8')) {
                 hls = new Hls({
-                    maxBufferLength: 30,
+                    maxBufferLength: 60,
+                    maxMaxBufferLength: 120,
+                    liveSyncDurationCount: 3,
                     enableWorker: true,
                     xhrSetup: function (xhr, url) { xhr.withCredentials = false; }
                 });
@@ -542,10 +564,8 @@
             }
         }
 
-        // --- GESTION DU PLEIN ÉCRAN & DU MENU OSD SUPÉRIEUR ---
         function toggleFullscreen() {
             let videoBox = document.getElementById('video-box');
-            
             if (!videoBox.classList.contains('fullscreen-mode')) {
                 videoBox.classList.add('fullscreen-mode');
                 if (videoBox.requestFullscreen) {
@@ -562,23 +582,64 @@
             }
         }
 
-        // Ouvre ou ferme le menu des chaînes en surimpression en mode plein écran
-        function toggleOsdMenu(event) {
+        function toggleOsdMenu(e) {
+            if (e) e.stopPropagation();
             let videoBox = document.getElementById('video-box');
             let osdMenu = document.getElementById('osd-menu');
-            
             if (videoBox.classList.contains('fullscreen-mode')) {
                 osdMenu.classList.toggle('visible');
             }
         }
 
-        // Navigation Télécommande D-Pad
+        // --- NAVIGATION COMPLÈTE TÉLÉCOMMANDE TV & ZAPPING ---
         window.addEventListener('keydown', (e) => {
             const groups = document.querySelectorAll('.cat-item');
             const channels = document.querySelectorAll('.channel-row');
+            const osdItems = document.querySelectorAll('.osd-channel-item');
+            let videoBox = document.getElementById('video-box');
+            let osdMenu = document.getElementById('osd-menu');
+
+            if (videoBox.classList.contains('fullscreen-mode') && osdMenu.classList.contains('visible')) {
+                if (e.key === 'ArrowDown' || e.keyCode === 40) {
+                    e.preventDefault();
+                    if (osdIndex < allChannels.length - 1) {
+                        osdItems[osdIndex].classList.remove('active');
+                        osdIndex++;
+                        osdItems[osdIndex].classList.add('active');
+                        osdItems[osdIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
+                } else if (e.key === 'ArrowUp' || e.keyCode === 38) {
+                    e.preventDefault();
+                    if (osdIndex > 0) {
+                        osdItems[osdIndex].classList.remove('active');
+                        osdIndex--;
+                        osdItems[osdIndex].classList.add('active');
+                        osdItems[osdIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
+                } else if (e.key === 'Enter' || e.keyCode === 13) {
+                    e.preventDefault();
+                    if (osdItems[osdIndex]) {
+                        playStream(allChannels[osdIndex]);
+                        osdMenu.classList.remove('visible');
+                    }
+                } else if (e.key === 'Escape' || e.keyCode === 27 || e.key === 'Backspace') {
+                    e.preventDefault();
+                    osdMenu.classList.remove('visible');
+                }
+                return;
+            }
+
+            if (videoBox.classList.contains('fullscreen-mode')) {
+                if (e.key === 'ArrowUp' || e.keyCode === 38 || e.key === 'ArrowDown' || e.keyCode === 40 || e.key === 'Enter' || e.keyCode === 13) {
+                    e.preventDefault();
+                    osdMenu.classList.add('visible');
+                    if (osdItems[osdIndex]) osdItems[osdIndex].scrollIntoView({ block: 'nearest' });
+                    return;
+                }
+            }
 
             if (document.getElementById("main-app").classList.contains("active") && document.getElementById("settings-modal").classList.contains("hidden")) {
-                if (e.key === 'ArrowDown') {
+                if (e.key === 'ArrowDown' || e.keyCode === 40) {
                     e.preventDefault();
                     if (currentFocus === 'channels' && channelIndex < channels.length - 1) {
                         channels[channelIndex].classList.remove('focused');
@@ -590,7 +651,7 @@
                         groupIndex++;
                         groups[groupIndex].classList.add('focused');
                     }
-                } else if (e.key === 'ArrowUp') {
+                } else if (e.key === 'ArrowUp' || e.keyCode === 38) {
                     e.preventDefault();
                     if (currentFocus === 'channels' && channelIndex > 0) {
                         channels[channelIndex].classList.remove('focused');
@@ -602,21 +663,21 @@
                         groupIndex--;
                         groups[groupIndex].classList.add('focused');
                     }
-                } else if (e.key === 'ArrowRight') {
+                } else if (e.key === 'ArrowRight' || e.keyCode === 39) {
                     e.preventDefault();
                     if (currentFocus === 'groups') {
                         groups[groupIndex].classList.remove('focused');
                         currentFocus = 'channels';
                         if (channels.length > 0) channels[channelIndex].classList.add('focused');
                     }
-                } else if (e.key === 'ArrowLeft') {
+                } else if (e.key === 'ArrowLeft' || e.keyCode === 37) {
                     e.preventDefault();
                     if (currentFocus === 'channels') {
                         if (channels.length > 0) channels[channelIndex].classList.remove('focused');
                         currentFocus = 'groups';
                         groups[groupIndex].classList.add('focused');
                     }
-                } else if (e.key === 'Enter') {
+                } else if (e.key === 'Enter' || e.keyCode === 13) {
                     e.preventDefault();
                     if (currentFocus === 'groups') {
                         groups[groupIndex].click();
