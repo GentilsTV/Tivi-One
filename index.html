@@ -109,15 +109,15 @@
             object-fit: contain !important;
         }
 
-        /* --- MENU OSD SEMI-TRANSPARENT (VIDÉO VISIBLE EN ARRIÈRE-PLAN) --- */
+        /* --- MENU OSD SEMI-TRANSPARENT --- */
         .osd-overlay-menu {
             position: absolute;
             top: 0;
             left: 0;
             width: 360px;
             height: 100%;
-            background: rgba(12, 14, 18, 0.65); /* Fond semi-transparent */
-            backdrop-filter: blur(12px); /* Effet de flou de style TV moderne */
+            background: rgba(12, 14, 18, 0.65);
+            backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border-right: 1px solid rgba(255, 255, 255, 0.15);
             z-index: 100000;
@@ -538,12 +538,17 @@
 
             if (hls) { hls.destroy(); hls = null; }
 
-            if (Hls.isSupported() && channel.url.includes('.m3u8')) {
+            // Optimisation HLS Allégée anti-saccades pour les téléviseurs
+            if (player.canPlayType('application/vnd.apple.mpegurl')) {
+                player.src = channel.url;
+                player.play().catch(e => console.log("Lecture native impossible"));
+            } else if (Hls.isSupported() && channel.url.includes('.m3u8')) {
                 hls = new Hls({
-                    maxBufferLength: 60,
-                    maxMaxBufferLength: 120,
-                    liveSyncDurationCount: 3,
-                    enableWorker: true,
+                    maxBufferLength: 15,
+                    maxMaxBufferLength: 30,
+                    liveSyncDurationCount: 2,
+                    enableWorker: false,
+                    lowLatencyMode: true,
                     xhrSetup: function (xhr, url) { xhr.withCredentials = false; }
                 });
                 hls.loadSource(channel.url);
