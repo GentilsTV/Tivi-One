@@ -51,6 +51,10 @@
             width: 100%; padding: 10px; background: #ff6600; border: none; 
             font-weight: bold; border-radius: 8px; cursor: pointer; color: #fff; font-size: 0.85rem; 
         }
+        .payment-instruction {
+            font-size: 0.73rem; color: #a0a6b8; background: rgba(0, 200, 83, 0.1); 
+            border: 1px dashed rgba(0, 200, 83, 0.4); padding: 6px; border-radius: 6px; margin-bottom: 8px; text-align: center;
+        }
 
         /* --- INTERFACE PRINCIPALE (STYLE TIVIMATE / TV) --- */
         #main-app {
@@ -71,8 +75,16 @@
         .header-actions { display: flex; gap: 4px; }
         .icon-btn { background: #1c2230; color: #00d2ff; border: 1px solid #2d3342; padding: 4px 6px; border-radius: 6px; font-size: 0.7rem; cursor: pointer; font-weight: bold; }
         
+        /* Barre de recherche des chaînes */
+        .search-container { padding: 8px 12px; border-bottom: 1px solid #222736; }
+        .search-input {
+            width: 100%; padding: 7px 10px; background: #181c27; border: 1px solid #2d3342;
+            color: #fff; border-radius: 6px; outline: none; font-size: 0.8rem;
+        }
+        .search-input:focus { border-color: #00d2ff; }
+
         .cat-list { list-style: none; margin-top: 5px; }
-        .cat-item { padding: 10px 15px; cursor: pointer; font-size: 0.85rem; color: #a0a6b8; transition: 0.2s; }
+        .cat-item { padding: 9px 15px; cursor: pointer; font-size: 0.82rem; color: #a0a6b8; transition: 0.2s; }
         .cat-item:hover, .cat-item.focused, .cat-item.active { background: #1c2230; color: #00d2ff; border-left: 4px solid #00d2ff; font-weight: bold; }
 
         #top-preview-panel {
@@ -228,11 +240,15 @@
                 <a href="https://pay.wave.com/m/M_dQNxOa48-kSX/c/ci/?amount=40000" target="_blank" class="sub-btn">12 Mois<span>40 000 F</span></a>
             </div>
 
+            <div class="payment-instruction">
+                📷 <strong>Important :</strong> Envoyez la capture de votre paiement sur WhatsApp pour recevoir votre code VIP instantanément !
+            </div>
+
             <div class="input-group">
                 <label>Déjà payé ? Entrez votre Pseudo :</label>
                 <input type="text" id="username-input" placeholder="Votre nom / pseudo" />
             </div>
-            <button id="btn-whatsapp" class="action-whatsapp">Valider mon paiement sur WhatsApp</button>
+            <button id="btn-whatsapp" class="action-whatsapp">Envoyer la capture sur WhatsApp</button>
 
             <div class="input-group" style="margin-top: 4px;">
                 <label>Vous avez reçu votre Code VIP ?</label>
@@ -244,7 +260,7 @@
 
     <!-- INTERFACE PRINCIPALE (STYLE TIVIMATE) -->
     <div id="main-app">
-        <!-- 1. Menu des Catégories à gauche -->
+        <!-- 1. Menu des Catégories à gauche avec Barre de Recherche -->
         <div id="sidebar-categories">
             <div class="cat-logo">
                 <span>tivione</span>
@@ -253,6 +269,12 @@
                     <button class="icon-btn" onclick="addNewList()" title="Ajouter M3U">+ M3U</button>
                 </div>
             </div>
+            
+            <!-- Barre de recherche des chaînes -->
+            <div class="search-container">
+                <input type="text" id="channel-search-input" class="search-input" placeholder="🔍 Rechercher une chaîne..." oninput="filterChannels()" />
+            </div>
+
             <ul id="groups-list" class="cat-list"></ul>
         </div>
 
@@ -306,7 +328,7 @@
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz_Ctu6g-bxLienRJyR1Slp-t5jQVPg_ruHuqx6gh_NEcSXu2yJwQ87J3aRn_-WKjeo/exec";
         const M3U_DEFAULT_URL = "https://iptv-org.github.io/iptv/languages/fra.m3u";
 
-        let allChannels = []; // La liste commence vide, aucune chaîne ne se lance au démarrage
+        let allChannels = [];
         let player = document.getElementById('iptv-player');
         let hls = null;
         let currentGroup = 'Toutes les Chaînes';
@@ -336,7 +358,7 @@
             if (!pseudo) { alert("Veuillez entrer votre pseudo."); return; }
             localStorage.setItem("tivione_username", pseudo);
             let parrain = localStorage.getItem("tivione_referred_by") || "Aucun";
-            const message = `Bonjour, je viens d'effectuer mon paiement Wave pour TiviOne. Mon pseudo : ${pseudo}. Parrain : ${parrain}. J'attends mon code VIP.`;
+            const message = `Bonjour, je viens d'effectuer mon paiement Wave pour TiviOne. Mon pseudo : ${pseudo}. Parrain : ${parrain}. Voici ma capture de paiement pour recevoir mon code VIP.`;
             window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`, "_blank");
         });
 
@@ -426,7 +448,6 @@
             }
             renderGroups();
             renderOsdChannels();
-            // Ligne de lecture automatique supprimée ici : l'application charge la liste mais ne lance aucune chaîne par défaut.
         }
 
         function renderGroups() {
@@ -444,6 +465,7 @@
                     document.querySelectorAll('.cat-item').forEach(el => el.classList.remove('active'));
                     li.classList.add('active');
                     currentGroup = group;
+                    document.getElementById('channel-search-input').value = ''; // Réinitialise la recherche lors du changement de groupe
                     renderChannels(group);
                 });
                 groupsList.appendChild(li);
@@ -451,19 +473,26 @@
             renderChannels('Toutes les Chaînes');
         }
 
-        function renderChannels(groupName) {
+        function renderChannels(groupName, searchQuery = '') {
             const container = document.getElementById('channels-container');
             container.innerHTML = '';
             channelIndex = 0;
 
             let favorites = JSON.parse(localStorage.getItem("tivione_favorites")) || [];
             let filtered = [];
-            if (groupName === 'Toutes les Chaînes') filtered = allChannels;
-            else if (groupName === '⭐ Favoris') filtered = allChannels.filter(c => favorites.includes(c.url));
-            else filtered = allChannels.filter(c => c.group === groupName);
+
+            if (searchQuery.trim() !== '') {
+                // Recherche globale si l'utilisateur tape dans la barre
+                let query = searchQuery.toLowerCase();
+                filtered = allChannels.filter(c => c.name.toLowerCase().includes(query));
+            } else {
+                if (groupName === 'Toutes les Chaînes') filtered = allChannels;
+                else if (groupName === '⭐ Favoris') filtered = allChannels.filter(c => favorites.includes(c.url));
+                else filtered = allChannels.filter(c => c.group === groupName);
+            }
 
             if (filtered.length === 0) {
-                container.innerHTML = `<div style="padding: 20px; color: #64748b; text-align: center;">Aucune chaîne</div>`;
+                container.innerHTML = `<div style="padding: 20px; color: #64748b; text-align: center;">Aucune chaîne trouvée</div>`;
                 return;
             }
 
@@ -495,11 +524,17 @@
                 row.querySelector('.fav-star').addEventListener('click', (e) => {
                     e.stopPropagation();
                     toggleFavorite(channel.url);
-                    renderChannels(groupName);
+                    renderChannels(groupName, searchQuery);
                 });
 
                 container.appendChild(row);
             });
+        }
+
+        // Fonction déclenchée lors de la saisie dans la barre de recherche
+        function filterChannels() {
+            let query = document.getElementById('channel-search-input').value;
+            renderChannels(currentGroup, query);
         }
 
         function renderOsdChannels() {
