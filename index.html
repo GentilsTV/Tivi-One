@@ -306,9 +306,7 @@
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz_Ctu6g-bxLienRJyR1Slp-t5jQVPg_ruHuqx6gh_NEcSXu2yJwQ87J3aRn_-WKjeo/exec";
         const M3U_DEFAULT_URL = "https://iptv-org.github.io/iptv/languages/fra.m3u";
 
-        let allChannels = [
-            { name: "NCI (Nouvelle Chaîne Ivoirienne)", group: "Côte d'Ivoire", url: "https://www.nci.ci/direct", isWeb: true }
-        ];
+        let allChannels = []; // La liste commence vide, aucune chaîne ne se lance au démarrage
         let player = document.getElementById('iptv-player');
         let hls = null;
         let currentGroup = 'Toutes les Chaînes';
@@ -428,7 +426,7 @@
             }
             renderGroups();
             renderOsdChannels();
-            if (allChannels.length > 0 && !player.src) playStream(allChannels[0]);
+            // Ligne de lecture automatique supprimée ici : l'application charge la liste mais ne lance aucune chaîne par défaut.
         }
 
         function renderGroups() {
@@ -538,7 +536,6 @@
 
             if (hls) { hls.destroy(); hls = null; }
 
-            // Optimisation HLS Allégée anti-saccades pour les téléviseurs
             if (player.canPlayType('application/vnd.apple.mpegurl')) {
                 player.src = channel.url;
                 player.play().catch(e => console.log("Lecture native impossible"));
