@@ -336,11 +336,11 @@
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz_Ctu6g-bxLienRJyR1Slp-t5jQVPg_ruHuqx6gh_NEcSXu2yJwQ87J3aRn_-WKjeo/exec";
         const M3U_DEFAULT_URL = "https://iptv-org.github.io/iptv/languages/fra.m3u";
 
-        // Intégration directe des chaînes personnalisées RTI 1 et NCI en haut de liste
+        // Définition de RTI 1 et NCI avec isWeb: true pour s'ouvrir correctement sans blocage CORS
         let hiddenChannelUrls = JSON.parse(localStorage.getItem("tivione_hidden_channels")) || [];
         let allChannels = [
-            { name: "RTI 1 (Direct)", url: "https://rtiplay.ci/rti1/direct", group: "Côte d'Ivoire (Direct)", isWeb: false },
-            { name: "NCI (Direct)", url: "https://www.nci.ci/direct", group: "Côte d'Ivoire (Direct)", isWeb: false }
+            { name: "RTI 1 (Direct)", url: "https://rtiplay.ci/rti1/direct", group: "Côte d'Ivoire (Direct)", isWeb: true },
+            { name: "NCI (Direct)", url: "https://www.nci.ci/direct", group: "Côte d'Ivoire (Direct)", isWeb: true }
         ];
         
         let currentPlayingChannel = null;
@@ -464,7 +464,6 @@
                 console.error("Erreur M3U:", error);
             }
             
-            // Filtrer les chaînes par défaut si elles ont été masquées précédemment
             allChannels = allChannels.filter(c => !hiddenChannelUrls.includes(c.url));
 
             renderGroups();
@@ -525,7 +524,7 @@
                 row.innerHTML = `
                     <div class="channel-num">${index + 1}</div>
                     <div class="channel-name">${channel.name}</div>
-                    <div class="channel-program">Flux direct (${channel.group})</div>
+                    <div class="channel-program">${channel.isWeb ? 'Flux Web Officiel' : 'Flux direct (' + channel.group + ')'}</div>
                     <div class="fav-star">${isFav ? '⭐' : '☆'}</div>
                 `;
 
@@ -538,7 +537,6 @@
 
                 row.addEventListener('dblclick', () => {
                     playStream(channel);
-                    toggleFullscreen();
                 });
 
                 row.querySelector('.fav-star').addEventListener('click', (e) => {
