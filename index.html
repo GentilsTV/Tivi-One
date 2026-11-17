@@ -75,7 +75,6 @@
         .header-actions { display: flex; gap: 4px; }
         .icon-btn { background: #1c2230; color: #00d2ff; border: 1px solid #2d3342; padding: 4px 6px; border-radius: 6px; font-size: 0.7rem; cursor: pointer; font-weight: bold; }
         
-        /* Barre de recherche des chaînes */
         .search-container { padding: 8px 12px; border-bottom: 1px solid #222736; }
         .search-input {
             width: 100%; padding: 7px 10px; background: #181c27; border: 1px solid #2d3342;
@@ -95,7 +94,7 @@
             position: relative;
         }
 
-        /* --- CONTENEUR VIDÉO & PLEIN ÉCRAN --- */
+        /* --- CONTENEUR VIDÉO & PLEIN ÉCRAN OPTIMISÉ (TÉLÉ + TÉLÉPHONE) --- */
         #video-box {
             width: 220px; height: 125px; background: #000; border-radius: 6px; overflow: hidden; flex-shrink: 0; border: 1px solid #2d3342; position: relative; cursor: pointer;
             transition: all 0.3s ease;
@@ -128,7 +127,7 @@
             left: 0;
             width: 360px;
             height: 100%;
-            background: rgba(12, 14, 18, 0.65);
+            background: rgba(12, 14, 18, 0.75);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border-right: 1px solid rgba(255, 255, 255, 0.15);
@@ -147,7 +146,7 @@
             display: flex; justify-content: space-between; align-items: center; 
         }
         .osd-channel-item {
-            padding: 9px 12px; margin-bottom: 6px; background: rgba(20, 25, 38, 0.75); border-radius: 6px;
+            padding: 9px 12px; margin-bottom: 6px; background: rgba(20, 25, 38, 0.85); border-radius: 6px;
             cursor: pointer; font-size: 0.82rem; color: #fff; border: 1px solid rgba(255,255,255,0.08); 
             display: flex; justify-content: space-between; align-items: center; transition: 0.15s;
         }
@@ -160,19 +159,40 @@
             position: absolute;
             top: 12px;
             left: 12px;
-            background: rgba(0, 0, 0, 0.45);
-            color: rgba(255, 255, 255, 0.7);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 5px 10px;
-            border-radius: 4px;
-            font-size: 0.7rem;
+            background: rgba(0, 0, 0, 0.6);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.75rem;
             cursor: pointer;
             z-index: 100001;
             display: none;
-            transition: 0.2s;
+            font-weight: bold;
         }
-        .osd-toggle-btn:hover { background: rgba(0, 0, 0, 0.75); color: #fff; }
+        .osd-toggle-btn:hover { background: rgba(0, 210, 255, 0.6); }
         #video-box.fullscreen-mode .osd-toggle-btn {
+            display: block;
+        }
+
+        /* Bouton de sortie du plein écran (visible en haut à droite en plein écran) */
+        .osd-exit-fs {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(239, 68, 68, 0.8);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            z-index: 100001;
+            display: none;
+            font-weight: bold;
+        }
+        .osd-exit-fs:hover { background: #ef4444; }
+        #video-box.fullscreen-mode .osd-exit-fs {
             display: block;
         }
 
@@ -189,7 +209,6 @@
         }
         .fullscreen-btn:hover { background: #ff8533; }
 
-        /* Bouton pour masquer la chaîne morte */
         .hide-channel-btn {
             background: rgba(239, 68, 68, 0.8); color: #fff; border: none; padding: 3px 8px; border-radius: 4px;
             font-size: 0.65rem; cursor: pointer; font-weight: bold; margin-left: 6px;
@@ -211,7 +230,6 @@
         .channel-program { flex: 1; padding: 8px 12px; color: #8c92a4; font-size: 0.75rem; border-left: 1px solid #1f2533; }
         .fav-star { padding: 0 12px; font-size: 1rem; color: #f59e0b; cursor: pointer; }
 
-        /* Modal Paramètres & Parrainage */
         #settings-modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; z-index: 10000;
@@ -286,10 +304,12 @@
 
         <!-- 2. Panneau Vidéo en haut à droite avec menu OSD transparent -->
         <div id="top-preview-panel">
-            <div id="video-box" onclick="toggleOsdMenu()" title="Cliquez pour afficher les chaînes">
+            <div id="video-box" onclick="toggleFullscreen()" title="Cliquez pour agrandir">
                 <video id="iptv-player" controls autoplay playsinline></video>
                 
-                <button class="osd-toggle-btn" onclick="toggleOsdMenu(event)">📺 Chaînes</button>
+                <!-- Boutons de contrôle visibles en mode Plein Écran -->
+                <button class="osd-toggle-btn" onclick="toggleOsdMenu(event)">📺 Liste des Chaînes</button>
+                <button class="osd-exit-fs" onclick="toggleFullscreen(event)">❌ Quitter</button>
 
                 <!-- MENU OSD SEMI-TRANSPARENT -->
                 <div id="osd-menu" class="osd-overlay-menu" onclick="event.stopPropagation()">
@@ -301,11 +321,11 @@
                 <h2 id="current-title">Sélectionnez une chaîne</h2>
                 <p id="current-desc" style="display: flex; align-items: center; gap: 6px;">
                     <span id="current-desc-text">Guide des programmes en direct</span>
-                    <button id="btn-hide-dead" class="hide-channel-btn hidden" onclick="hideCurrentChannel()">🗑️ Masquer cette chaîne</button>
+                    <button id="btn-hide-dead" class="hide-channel-btn hidden" onclick="hideCurrentChannel()">🗑️ Masquer</button>
                 </p>
                 <div class="player-actions-row">
                     <div class="time-badge" id="current-time">En direct</div>
-                    <button class="fullscreen-btn" onclick="toggleFullscreen()">📺 Plein Écran</button>
+                    <button class="fullscreen-btn" onclick="toggleFullscreen()">📺 Agrandir / Plein Écran</button>
                 </div>
             </div>
         </div>
@@ -336,11 +356,10 @@
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz_Ctu6g-bxLienRJyR1Slp-t5jQVPg_ruHuqx6gh_NEcSXu2yJwQ87J3aRn_-WKjeo/exec";
         const M3U_DEFAULT_URL = "https://iptv-org.github.io/iptv/languages/fra.m3u";
 
-        // Définition de RTI 1 et NCI avec isWeb: true pour s'ouvrir correctement sans blocage CORS
         let hiddenChannelUrls = JSON.parse(localStorage.getItem("tivione_hidden_channels")) || [];
         let allChannels = [
-            { name: "RTI 1 (Direct)", url: "https://rtiplay.ci/rti1/direct", group: "Côte d'Ivoire (Direct)", isWeb: true },
-            { name: "NCI (Direct)", url: "https://www.nci.ci/direct", group: "Côte d'Ivoire (Direct)", isWeb: true }
+            { name: "RTI 1 (Direct)", url: "https://stream.live.ci/hls/rti1.m3u8", group: "Côte d'Ivoire (Direct)", isWeb: false },
+            { name: "NCI (Direct)", url: "https://nci-live.nedji.com/hls/nci.m3u8", group: "Côte d'Ivoire (Direct)", isWeb: false }
         ];
         
         let currentPlayingChannel = null;
@@ -524,7 +543,7 @@
                 row.innerHTML = `
                     <div class="channel-num">${index + 1}</div>
                     <div class="channel-name">${channel.name}</div>
-                    <div class="channel-program">${channel.isWeb ? 'Flux Web Officiel' : 'Flux direct (' + channel.group + ')'}</div>
+                    <div class="channel-program">Flux direct (${channel.group})</div>
                     <div class="fav-star">${isFav ? '⭐' : '☆'}</div>
                 `;
 
@@ -537,6 +556,7 @@
 
                 row.addEventListener('dblclick', () => {
                     playStream(channel);
+                    toggleFullscreen();
                 });
 
                 row.querySelector('.fav-star').addEventListener('click', (e) => {
@@ -640,20 +660,30 @@
             }
         }
 
-        function toggleFullscreen() {
+        // --- GESTION PLEIN ÉCRAN OPTIMISÉE (TÉLÉPHONE & TÉLÉVISION) ---
+        function toggleFullscreen(e) {
+            if (e) e.stopPropagation();
             let videoBox = document.getElementById('video-box');
+            
             if (!videoBox.classList.contains('fullscreen-mode')) {
                 videoBox.classList.add('fullscreen-mode');
+                
+                // Demande le plein écran natif (WebView / TV / Téléphone)
                 if (videoBox.requestFullscreen) {
                     videoBox.requestFullscreen().catch(() => {});
+                } else if (videoBox.webkitRequestFullscreen) {
+                    videoBox.webkitRequestFullscreen();
                 } else if (player.webkitEnterFullscreen) {
-                    player.webkitEnterFullscreen();
+                    player.webkitEnterFullscreen(); // Spécifique iOS / certains navigateurs mobiles
                 }
             } else {
                 videoBox.classList.remove('fullscreen-mode');
                 document.getElementById('osd-menu').classList.remove('visible');
+                
                 if (document.exitFullscreen) {
                     document.exitFullscreen().catch(() => {});
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
                 }
             }
         }
@@ -710,6 +740,10 @@
                     e.preventDefault();
                     osdMenu.classList.add('visible');
                     if (osdItems[osdIndex]) osdItems[osdIndex].scrollIntoView({ block: 'nearest' });
+                    return;
+                } else if (e.key === 'Escape' || e.keyCode === 27 || e.key === 'Backspace') {
+                    e.preventDefault();
+                    toggleFullscreen();
                     return;
                 }
             }
