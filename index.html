@@ -94,7 +94,6 @@
             position: relative;
         }
 
-        /* --- CONTENEUR VIDÉO & PLEIN ÉCRAN OPTIMISÉ (TÉLÉ + TÉLÉPHONE) --- */
         #video-box {
             width: 220px; height: 125px; background: #000; border-radius: 6px; overflow: hidden; flex-shrink: 0; border: 1px solid #2d3342; position: relative; cursor: pointer;
             transition: all 0.3s ease;
@@ -120,7 +119,6 @@
             object-fit: contain !important;
         }
 
-        /* --- MENU OSD SEMI-TRANSPARENT --- */
         .osd-overlay-menu {
             position: absolute;
             top: 0;
@@ -154,7 +152,6 @@
             background: rgba(0, 210, 255, 0.35); border-color: #00d2ff; font-weight: bold; 
         }
 
-        /* Bouton discret en haut à gauche sur la vidéo en plein écran */
         .osd-toggle-btn {
             position: absolute;
             top: 12px;
@@ -175,7 +172,6 @@
             display: block;
         }
 
-        /* Bouton de sortie du plein écran (visible en haut à droite en plein écran) */
         .osd-exit-fs {
             position: absolute;
             top: 12px;
@@ -357,10 +353,8 @@
         const M3U_DEFAULT_URL = "https://iptv-org.github.io/iptv/languages/fra.m3u";
 
         let hiddenChannelUrls = JSON.parse(localStorage.getItem("tivione_hidden_channels")) || [];
-        let allChannels = [
-            { name: "RTI 1 (Direct)", url: "https://stream.live.ci/hls/rti1.m3u8", group: "Côte d'Ivoire (Direct)", isWeb: false },
-            { name: "NCI (Direct)", url: "https://nci-live.nedji.com/hls/nci.m3u8", group: "Côte d'Ivoire (Direct)", isWeb: false }
-        ];
+        // Liste de base vide ou propre pour laisser la liste M3U charger les flux stables
+        let allChannels = [];
         
         let currentPlayingChannel = null;
         let player = document.getElementById('iptv-player');
@@ -660,26 +654,22 @@
             }
         }
 
-        // --- GESTION PLEIN ÉCRAN OPTIMISÉE (TÉLÉPHONE & TÉLÉVISION) ---
         function toggleFullscreen(e) {
             if (e) e.stopPropagation();
             let videoBox = document.getElementById('video-box');
             
             if (!videoBox.classList.contains('fullscreen-mode')) {
                 videoBox.classList.add('fullscreen-mode');
-                
-                // Demande le plein écran natif (WebView / TV / Téléphone)
                 if (videoBox.requestFullscreen) {
                     videoBox.requestFullscreen().catch(() => {});
                 } else if (videoBox.webkitRequestFullscreen) {
                     videoBox.webkitRequestFullscreen();
                 } else if (player.webkitEnterFullscreen) {
-                    player.webkitEnterFullscreen(); // Spécifique iOS / certains navigateurs mobiles
+                    player.webkitEnterFullscreen();
                 }
             } else {
                 videoBox.classList.remove('fullscreen-mode');
                 document.getElementById('osd-menu').classList.remove('visible');
-                
                 if (document.exitFullscreen) {
                     document.exitFullscreen().catch(() => {});
                 } else if (document.webkitExitFullscreen) {
@@ -697,7 +687,6 @@
             }
         }
 
-        // --- NAVIGATION COMPLÈTE TÉLÉCOMMANDE TV & ZAPPING ---
         window.addEventListener('keydown', (e) => {
             const groups = document.querySelectorAll('.cat-item');
             const channels = document.querySelectorAll('.channel-row');
