@@ -189,6 +189,13 @@
         }
         .fullscreen-btn:hover { background: #ff8533; }
 
+        /* Bouton pour masquer la chaîne morte */
+        .hide-channel-btn {
+            background: rgba(239, 68, 68, 0.8); color: #fff; border: none; padding: 3px 8px; border-radius: 4px;
+            font-size: 0.65rem; cursor: pointer; font-weight: bold; margin-left: 6px;
+        }
+        .hide-channel-btn:hover { background: #ef4444; }
+
         #epg-grid-panel {
             grid-column: 2; 
             grid-row: 2; 
@@ -270,7 +277,6 @@
                 </div>
             </div>
             
-            <!-- Barre de recherche des chaînes -->
             <div class="search-container">
                 <input type="text" id="channel-search-input" class="search-input" placeholder="🔍 Rechercher une chaîne..." oninput="filterChannels()" />
             </div>
@@ -283,10 +289,9 @@
             <div id="video-box" onclick="toggleOsdMenu()" title="Cliquez pour afficher les chaînes">
                 <video id="iptv-player" controls autoplay playsinline></video>
                 
-                <!-- Bouton discret en haut à gauche sur la vidéo en plein écran -->
                 <button class="osd-toggle-btn" onclick="toggleOsdMenu(event)">📺 Chaînes</button>
 
-                <!-- MENU OSD SEMI-TRANSPARENT (Zapping en direct) -->
+                <!-- MENU OSD SEMI-TRANSPARENT -->
                 <div id="osd-menu" class="osd-overlay-menu" onclick="event.stopPropagation()">
                     <div class="osd-title"><span>📺 Chaînes</span><span style="font-size:0.65rem; color:#00d2ff;">(▲▼ Naviguer)</span></div>
                     <div id="osd-channels-list"></div>
@@ -294,7 +299,10 @@
             </div>
             <div class="preview-info">
                 <h2 id="current-title">Sélectionnez une chaîne</h2>
-                <p id="current-desc">Guide des programmes en direct</p>
+                <p id="current-desc" style="display: flex; align-items: center; gap: 6px;">
+                    <span id="current-desc-text">Guide des programmes en direct</span>
+                    <button id="btn-hide-dead" class="hide-channel-btn hidden" onclick="hideCurrentChannel()">🗑️ Masquer cette chaîne</button>
+                </p>
                 <div class="player-actions-row">
                     <div class="time-badge" id="current-time">En direct</div>
                     <button class="fullscreen-btn" onclick="toggleFullscreen()">📺 Plein Écran</button>
@@ -328,7 +336,14 @@
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz_Ctu6g-bxLienRJyR1Slp-t5jQVPg_ruHuqx6gh_NEcSXu2yJwQ87J3aRn_-WKjeo/exec";
         const M3U_DEFAULT_URL = "https://iptv-org.github.io/iptv/languages/fra.m3u";
 
-        let allChannels = [];
+        // Intégration directe des chaînes personnalisées RTI 1 et NCI en haut de liste
+        let hiddenChannelUrls = JSON.parse(localStorage.getItem("tivione_hidden_channels")) || [];
+        let allChannels = [
+            { name: "RTI 1 (Direct)", url: "https://rtiplay.ci/rti1/direct", group: "Côte d'Ivoire (Direct)", isWeb: false },
+            { name: "NCI (Direct)", url: "https://www.nci.ci/direct", group: "Côte d'Ivoire (Direct)", isWeb: false }
+        ];
+        
+        let currentPlayingChannel = null;
         let player = document.getElementById('iptv-player');
         let hls = null;
         let currentGroup = 'Toutes les Chaînes';
@@ -437,7 +452,9 @@
                         if (parts.length > 1) currentTitle = parts[parts.length - 1];
                     } else if (line && !line.startsWith("#")) {
                         if (currentTitle) {
-                            allChannels.push({ name: currentTitle, url: line, group: groupToUse, isWeb: false });
+                            if (!hiddenChannelUrls.includes(line)) {
+                                allChannels.push({ name: currentTitle, url: line, group: groupToUse, isWeb: false });
+                            }
                             currentTitle = "";
                             groupToUse = customGroupName;
                         }
@@ -446,6 +463,10 @@
             } catch (error) {
                 console.error("Erreur M3U:", error);
             }
+            
+            // Filtrer les chaînes par défaut si elles ont été masquées précédemment
+            allChannels = allChannels.filter(c => !hiddenChannelUrls.includes(c.url));
+
             renderGroups();
             renderOsdChannels();
         }
@@ -465,7 +486,7 @@
                     document.querySelectorAll('.cat-item').forEach(el => el.classList.remove('active'));
                     li.classList.add('active');
                     currentGroup = group;
-                    document.getElementById('channel-search-input').value = ''; // Réinitialise la recherche lors du changement de groupe
+                    document.getElementById('channel-search-input').value = '';
                     renderChannels(group);
                 });
                 groupsList.appendChild(li);
@@ -482,7 +503,6 @@
             let filtered = [];
 
             if (searchQuery.trim() !== '') {
-                // Recherche globale si l'utilisateur tape dans la barre
                 let query = searchQuery.toLowerCase();
                 filtered = allChannels.filter(c => c.name.toLowerCase().includes(query));
             } else {
@@ -531,7 +551,6 @@
             });
         }
 
-        // Fonction déclenchée lors de la saisie dans la barre de recherche
         function filterChannels() {
             let query = document.getElementById('channel-search-input').value;
             renderChannels(currentGroup, query);
@@ -560,14 +579,36 @@
             localStorage.setItem("tivione_favorites", JSON.stringify(favorites));
         }
 
+        function hideCurrentChannel() {
+            if (!currentPlayingChannel) return;
+            if (confirm(`Voulez-vous masquer la chaîne "${currentPlayingChannel.name}" de votre liste ?`)) {
+                hiddenChannelUrls.push(currentPlayingChannel.url);
+                localStorage.setItem("tivione_hidden_channels", JSON.stringify(hiddenChannelUrls));
+                
+                allChannels = allChannels.filter(c => c.url !== currentPlayingChannel.url);
+                
+                player.pause();
+                player.src = "";
+                document.getElementById('current-title').textContent = "Sélectionnez une chaîne";
+                document.getElementById('current-desc-text').textContent = "Guide des programmes en direct";
+                document.getElementById('btn-hide-dead').classList.add('hidden');
+                
+                renderGroups();
+                renderOsdChannels();
+                alert("Chaîne masquée avec succès !");
+            }
+        }
+
         function playStream(channel) {
             if (channel.isWeb) {
                 window.open(channel.url, "_blank");
                 return;
             }
 
+            currentPlayingChannel = channel;
             document.getElementById('current-title').textContent = channel.name;
-            document.getElementById('current-desc').textContent = `Groupe : ${channel.group}`;
+            document.getElementById('current-desc-text').textContent = `Groupe : ${channel.group}`;
+            document.getElementById('btn-hide-dead').classList.remove('hidden');
 
             if (hls) { hls.destroy(); hls = null; }
 
@@ -591,7 +632,7 @@
                         switch (data.type) {
                             case Hls.ErrorTypes.NETWORK_ERROR: hls.startLoad(); break;
                             case Hls.ErrorTypes.MEDIA_ERROR: hls.recoverMediaError(); break;
-                            default: hls.destroy(); player.src = channel.url; player.play(); break;
+                            default: hls.destroy(); console.log("Erreur flux mort détectée"); break;
                         }
                     }
                 });
