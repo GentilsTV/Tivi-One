@@ -1,6 +1,6 @@
 {
-  "name": "World IPTV",
-  "short_name": "World IPTV",
+  "name": "TiviOne",
+  "short_name": "TiviOne",
   "description": "Lecteur IPTV pour TV, mobile et ordinateur",
   "lang": "fr",
   "start_url": "./index.html",
