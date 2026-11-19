@@ -1,0 +1,8 @@
+{
+  "name": "tivione",
+  "version": "1.0.0",
+  "private": true,
+  "description": "TiviOne – lecteur IPTV et relais de flux",
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": ">=18" }
+}
