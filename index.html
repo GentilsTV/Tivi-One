@@ -508,8 +508,11 @@ function attempts(c){
   return ms.filter(m=>m==='hls'?hj:m==='nat'?(k==='file'||nat):true).map(m=>({s:px?proxyUrl(s):s,m,px}));
  };
  const origs=[c.url,...(c.alt||[])],pxOn=proxyOk&&sess&&pxMode!=='never';
- const direct=origs.flatMap(u=>per(upg(u),false)),prox=pxOn?origs.flatMap(u=>per(u,true)):[];
- const all=pxOn&&pxMode==='always'?[...prox,...direct]:[...direct,...prox];
+ const isHttp=u=>/^http:\/\//i.test(u);
+ const httpProx=pxOn?origs.filter(isHttp).flatMap(u=>per(u,true)):[];
+ const direct=origs.filter(u=>!isHttp(u)||!pxOn).flatMap(u=>per(upg(u),false));
+ const prox=pxOn?origs.flatMap(u=>per(u,true)):[];
+ const all=pxOn&&pxMode==='always'?[...prox,...direct]:[...httpProx,...direct,...prox];
  return all.length?all:origs.map(s=>({s,m:'nat',px:false}));
 }
 function play(i,alt,auto){
