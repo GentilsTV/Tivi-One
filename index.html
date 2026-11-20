@@ -103,6 +103,14 @@ a.btn{display:block;text-align:center;text-decoration:none}
 #web{display:none;position:absolute;inset:0;width:100%;height:100%;border:0;background:#fff}
 .isweb #web{display:block}.isweb video{display:none}
 #webo{display:none;left:10px;text-decoration:none;color:var(--tx)}.isweb #webo{display:block}
+#txBox{max-height:210px;overflow-y:auto;display:grid;gap:8px;padding-right:2px}
+.txi{background:var(--bg);border:1px solid var(--ln);border-radius:10px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:14px}
+.txi-l{display:grid;gap:2px;min-width:0}.txi-l b{color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.txi-l span{color:var(--mu);font-size:12px}
+.txi-r{text-align:right;flex:none;display:grid;gap:3px}.txi-r b{color:var(--fo);font-size:15px}
+.txb{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600}
+.txb.ok{background:#12261d;color:#34d399;border:1px solid #2f6a4a}
+.txb.wait{background:#2a2211;color:var(--fo);border:1px solid #59461d}
+.txb.com{background:#162447;color:#7aa8ff;border:1px solid #2b4177}
 </style>
 </head>
 <body data-view="home">
@@ -168,6 +176,8 @@ a.btn{display:block;text-align:center;text-decoration:none}
  <button class="btn" id="sCopy">Copier mon lien</button>
  <p>Filleuls : <b id="sFil">0</b> · Gains : <b id="sGain">0 F</b></p>
  <button class="btn wa" id="sRet">Demander un retrait (WhatsApp)</button>
+ <h3>Historique des transactions</h3>
+ <div id="txBox"></div>
  <button class="btn gh" id="sEng">Moteur de lecture : Auto</button>
  <button class="btn gh" id="sPx">Relais (proxy) : Auto</button>
  <button class="btn gh" id="sPl">Mes playlists</button>
@@ -201,11 +211,36 @@ const CFG={
 };
 const DEFAULT_PL='https://iptv-org.github.io/iptv/index.language.m3u';
 const EXTRA=[
+ {name:'Oha TV (Chaînes)',group:'TiviOne',logo:'',id:'',n:0,url:'https://oha.to/#/channels',web:true},
  {name:'NCI (direct)',group:'TiviOne',logo:'https://nci.ci/assets/images/logo_nci.png',id:'',n:0,url:'https://nci.cdn.easybroadcast.fr/NCI_ABR/ncipix/playlist.m3u8',alt:['https://nci.cdn.easybroadcast.fr/NCI_HEVC/index.m3u8']},
  {name:'RMTV (ES)',group:'TiviOne',logo:'',id:'',n:0,url:'https://rmtv.akamaized.net/hls/live/2043153/rmtv-es-web/master.m3u8'},
  {name:'RMTV (EN)',group:'TiviOne',logo:'',id:'',n:0,url:'https://rmtv.akamaized.net/hls/live/2043154/rmtv-en-web/bitrate_3.m3u8'}];
 const fcfa=n=>Number(n||0).toLocaleString('fr-FR')+' F';
 let sess=jget('iptv.sess',null),selPlan=null,pls=jget('iptv.pls',[]);
+let txList=jget('iptv.tx',[]);
+const saveTx=()=>store.set('iptv.tx',JSON.stringify(txList.slice(0,50)));
+function addTx(item){
+ txList.unshift({id:Date.now()+'-'+Math.random().toString(36).slice(2,6),date:new Date().toISOString(),...item});
+ saveTx();
+}
+function renderTx(items){
+ const box=$('#txBox');if(!box)return;box.textContent='';
+ const list=items&&items.length?items:txList;
+ if(!list.length){box.append(el('p','note','Aucune transaction enregistrée pour le moment.'));return}
+ list.forEach(t=>{
+  const row=el('div','txi');
+  const left=el('div','txi-l');
+  const dStr=t.date?new Date(t.date).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'';
+  left.append(el('b',null,t.label||'Transaction'),el('span',null,(t.type==='commission'?'Commission / Retrait':'Abonnement')+(dStr?' · '+dStr:'')));
+  const right=el('div','txi-r');
+  right.append(el('b',null,typeof t.amount==='number'?fcfa(t.amount):(t.amount||'—')));
+  const st=t.status||'Validé';
+  const cls=t.type==='commission'?'txb com':/attente|cours/i.test(st)?'txb wait':'txb ok';
+  right.append(el('span',cls,st));
+  row.append(left,right);
+  box.append(row);
+ });
+}
 (()=>{const r=new URLSearchParams(location.search).get('ref');if(r)store.set('iptv.ref',r.slice(0,40))})();
 const dev=(()=>{let d=store.get('iptv.dev');if(!d){d=crypto.randomUUID?crypto.randomUUID():Date.now()+'-'+Math.random();store.set('iptv.dev',d)}return d})();
 async function api(b){const r=await fetch(CFG.api,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({...b,dev})});return r.json()}
@@ -227,6 +262,12 @@ $('#gWa').onclick=e=>{
  const ps=$('#gPseudo').value.trim();
  if(!ps){e.preventDefault();$('#gErr').textContent='Entrez votre pseudo avant d’envoyer la capture.';$('#gPseudo').focus();return}
  const ref=store.get('iptv.ref');
+ addTx({
+  type:'abonnement',
+  label:selPlan?'Abonnement '+selPlan.m+' mois ('+ps+')':'Abonnement TiviOne ('+ps+')',
+  amount:selPlan?selPlan.p:'À confirmer',
+  status:'En attente'
+ });
  const m='Bonjour, j’ai payé mon abonnement TiviOne'+(selPlan?' : '+selPlan.m+' mois ('+selPlan.d+' jours, '+fcfa(selPlan.p)+')':' (formule à confirmer)')+'.\nPseudo : '+ps+(ref?'\nParrain : '+ref:'')+'\nVoici la capture du paiement.';
  $('#gWa').href='https://wa.me/'+CFG.wa+'?text='+encodeURIComponent(m);
 };
@@ -235,7 +276,11 @@ $('#gGo').onclick=async()=>{
  try{
   const r=await api({a:'login',code:c});
   if(!r.ok){$('#gErr').textContent=r.err||'Code invalide.';return}
-  sess={code:c.toUpperCase(),pseudo:r.pseudo,refId:r.refId,exp:r.exp,playlist:r.playlist};saveSess();unlock();
+  sess={code:c.toUpperCase(),pseudo:r.pseudo,refId:r.refId,exp:r.exp,playlist:r.playlist};saveSess();
+  if(!txList.some(x=>x.code===sess.code)){
+   addTx({type:'abonnement',code:sess.code,label:'Activation VIP ('+sess.code+')',amount:'Actif',status:'Validé'});
+  }
+  unlock();
  }catch(e){$('#gErr').textContent='Connexion impossible. Vérifiez votre connexion internet.'}
 };
 async function boot(){
@@ -255,10 +300,26 @@ $('#sBtn').onclick=async()=>{
  if(!sess)return;engTxt();pxTxt();$('#sCode').textContent=sess.code;$('#set').classList.add('open');
  $('#sRef').textContent=refLink();$('#sFil').textContent='…';$('#sGain').textContent='…';$('#sCopy').textContent='Copier mon lien';
  $('#sExp').textContent='Abonnement valable jusqu’au '+new Date(sess.exp).toLocaleDateString('fr-FR')+'.';
- try{const r=await api({a:'stats',code:sess.code});if(r.ok){$('#sFil').textContent=r.filleuls;$('#sGain').textContent=fcfa(r.gains)}}catch(e){}
+ renderTx();
+ try{
+  const r=await api({a:'stats',code:sess.code});
+  if(r.ok){
+   $('#sFil').textContent=r.filleuls;$('#sGain').textContent=fcfa(r.gains);
+   if(Array.isArray(r.transactions)&&r.transactions.length)renderTx(r.transactions);
+  }
+ }catch(e){}
+ try{
+  const h=await api({a:'history',code:sess.code});
+  if(h.ok&&Array.isArray(h.transactions)&&h.transactions.length)renderTx(h.transactions);
+ }catch(e){}
 };
 $('#sCopy').onclick=async()=>{try{await navigator.clipboard.writeText(refLink());$('#sCopy').textContent='Lien copié ✓'}catch(e){prompt('Copiez ce lien :',refLink())}};
-$('#sRet').onclick=()=>waLink('Bonjour, je demande le retrait de mes gains de parrainage.\nPseudo : '+sess.pseudo+'\nIdentifiant : '+sess.refId+'\nGains : '+$('#sGain').textContent);
+$('#sRet').onclick=()=>{
+ const gTxt=$('#sGain').textContent;
+ addTx({type:'commission',label:'Demande de retrait commissions',amount:gTxt,status:'En attente'});
+ renderTx();
+ waLink('Bonjour, je demande le retrait de mes gains de parrainage.\nPseudo : '+sess.pseudo+'\nIdentifiant : '+sess.refId+'\nGains : '+gTxt);
+};
 $('#sClose').onclick=()=>$('#set').classList.remove('open');
 const engL={auto:'Auto',native:'Natif (TV)',hlsjs:'hls.js'};
 function engTxt(){$('#sEng').textContent='Moteur de lecture : '+engL[eng]}
