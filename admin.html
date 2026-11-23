@@ -15,7 +15,7 @@
 body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 button,input,select{font:inherit;color:inherit}
 button{cursor:pointer}
-.wrap{max-width:1200px;margin:0 auto;padding:16px}
+.wrap{max-width:1240px;margin:0 auto;padding:16px}
 header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;background:var(--p);border:1px solid var(--ln);border-radius:14px;padding:14px 18px;margin-bottom:16px}
 header h1{margin:0;font-size:20px;color:var(--fo)}
 .sub{font-size:13px;color:var(--mu)}
@@ -23,17 +23,20 @@ header h1{margin:0;font-size:20px;color:var(--fo)}
 .btn{background:var(--ac);border:0;border-radius:10px;padding:10px 14px;font-weight:600;color:#fff}
 .btn.gh{background:transparent;border:1px solid var(--ln);color:var(--tx)}
 .btn.dn{background:var(--rd)}
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:16px}
+.tabs{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.tab{background:var(--p);border:1px solid var(--ln);border-radius:10px;padding:10px 16px;font-weight:600;color:var(--mu)}
+.tab.active{background:var(--p2);color:var(--fo);border-color:var(--fo)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:12px;margin-bottom:16px}
 .stat{background:var(--p);border:1px solid var(--ln);border-radius:14px;padding:14px 16px}
 .stat span{display:block;font-size:13px;color:var(--mu)}
-.stat b{display:block;font-size:26px;margin-top:4px;color:var(--fo)}
+.stat b{display:block;font-size:24px;margin-top:4px;color:var(--fo)}
 .stat.green b{color:var(--gr)}
 .stat.red b{color:var(--rd)}
 .toolbar{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px}
 .toolbar input,.toolbar select{background:var(--p);border:1px solid var(--ln);border-radius:10px;padding:10px 14px}
 .toolbar input{flex:1;min-width:220px}
 .table-wrap{background:var(--p);border:1px solid var(--ln);border-radius:14px;overflow-x:auto}
-table{width:100%;border-collapse:collapse;min-width:860px}
+table{width:100%;border-collapse:collapse;min-width:880px}
 th,td{padding:12px 14px;text-align:left;border-bottom:1px solid var(--ln);vertical-align:top}
 th{background:var(--p2);font-size:13px;color:var(--mu);text-transform:uppercase;letter-spacing:.03em}
 tr:last-child td{border-bottom:0}
@@ -41,15 +44,18 @@ tr:hover td{background:rgba(255,255,255,.02)}
 .badge{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600}
 .badge.act{background:rgba(16,185,129,.15);color:#34d399;border:1px solid rgba(16,185,129,.35)}
 .badge.exp{background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(239,68,68,.35)}
+.badge.paid{background:rgba(79,134,255,.16);color:#93c5fd;border:1px solid rgba(79,134,255,.35)}
 .devs{display:grid;gap:6px}
 .dev-item{display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--ln);border-radius:8px;padding:6px 10px;font-size:13px}
 .dot{width:10px;height:10px;border-radius:50%;flex:none}
 .dot.on{background:var(--gr);box-shadow:0 0 8px var(--gr)}
 .dot.off{background:var(--rd);box-shadow:0 0 6px rgba(239,68,68,.6)}
 .dev-meta{color:var(--mu);font-size:12px}
+.fill-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.fill-chip{background:var(--bg);border:1px solid var(--ln);border-radius:8px;padding:4px 8px;font-size:12px}
 .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px}
+.hide{display:none!important}
 #loginGate{position:fixed;inset:0;background:rgba(5,8,14,.94);display:grid;place-items:center;padding:16px;z-index:10}
-#loginGate.hide{display:none}
 .card{width:min(420px,100%);background:var(--p);border:1px solid var(--ln);border-radius:16px;padding:22px;display:grid;gap:12px}
 .card h2{margin:0;color:var(--fo)}
 .card input{width:100%;background:var(--bg);border:1px solid var(--ln);border-radius:10px;padding:11px 14px}
@@ -63,7 +69,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
 <div id="loginGate">
   <div class="card">
     <h2>TiviOne Admin</h2>
-    <p class="sub">Entrez votre code administrateur pour suivre les appareils en direct et l’historique des abonnements.</p>
+    <p class="sub">Entrez votre code administrateur pour suivre les appareils en direct, l’historique et les parrains.</p>
     <input id="adminCode" type="text" value="TIVI-GENTILS SERVICES-480" placeholder="Ex: TIVI-GENTILS SERVICES-480" autocomplete="off" autocapitalize="characters">
     <button type="button" class="btn" id="loginBtn">Accéder au tableau de bord</button>
     <div id="lErr"></div>
@@ -87,35 +93,71 @@ tr:hover td{background:rgba(255,255,255,.02)}
     <div class="stat red"><span>Appareils hors ligne (Rouge)</span><b id="stOffline">0</b></div>
     <div class="stat"><span>Abonnements actifs</span><b id="stAct">0</b></div>
     <div class="stat"><span>Abonnements expirés / inactifs</span><b id="stExp">0</b></div>
-    <div class="stat"><span>Total clients</span><b id="stTotal">0</b></div>
+    <div class="stat"><span>Gains parrains (À payer)</span><b id="stPending">0 F</b></div>
+    <div class="stat"><span>Retraits parrains (Payés)</span><b id="stWithdrawn">0 F</b></div>
   </section>
 
-  <div class="toolbar">
-    <input id="search" type="search" placeholder="Rechercher un client, un code VIP, un parrain ou un appareil…">
-    <select id="filterState">
-      <option value="all">Tous les clients</option>
-      <option value="watching">En train de regarder (Voyant vert)</option>
-      <option value="offline">Hors ligne (Voyant rouge)</option>
-      <option value="active">Abonnement actif</option>
-      <option value="expired">Abonnement expiré / inactif</option>
-    </select>
+  <div class="tabs">
+    <button type="button" class="tab active" id="tabClients">Clients &amp; Appareils (Temps réel)</button>
+    <button type="button" class="tab" id="tabSponsors">Parrains, Filleuls &amp; Retraits (<span id="stSponsorsCount">0</span>)</button>
   </div>
 
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>Client &amp; Code VIP</th>
-          <th>Appareils (Temps réel)</th>
-          <th>Formule &amp; Historique</th>
-          <th>Date d’expiration</th>
-          <th>Statut</th>
-        </tr>
-      </thead>
-      <tbody id="tbody">
-        <tr><td colspan="5" class="sub">Chargement des données…</td></tr>
-      </tbody>
-    </table>
+  <div id="sectionClients">
+    <div class="toolbar">
+      <input id="searchClients" type="search" placeholder="Rechercher un client, un code VIP, un parrain ou un appareil…">
+      <select id="filterState">
+        <option value="all">Tous les clients</option>
+        <option value="watching">En train de regarder (Voyant vert)</option>
+        <option value="offline">Hors ligne (Voyant rouge)</option>
+        <option value="active">Abonnement actif</option>
+        <option value="expired">Abonnement expiré / inactif</option>
+      </select>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Client &amp; Code VIP</th>
+            <th>Appareils (Temps réel)</th>
+            <th>Formule &amp; Historique</th>
+            <th>Date d’expiration</th>
+            <th>Statut</th>
+          </tr>
+        </thead>
+        <tbody id="tbodyClients">
+          <tr><td colspan="5" class="sub">Chargement des données…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="sectionSponsors" class="hide">
+    <div class="toolbar">
+      <input id="searchSponsors" type="search" placeholder="Rechercher un parrain, un code ou un filleul…">
+      <select id="filterSponsorPay">
+        <option value="all">Tous les parrains</option>
+        <option value="has_pending">Avec gains à payer</option>
+        <option value="has_withdrawn">Avec retraits effectués</option>
+      </select>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Parrain &amp; Code</th>
+            <th>Nombre de filleuls</th>
+            <th>Gains disponibles (Non retirés)</th>
+            <th>Retraits effectués (Payés)</th>
+            <th>Détail des filleuls</th>
+          </tr>
+        </thead>
+        <tbody id="tbodySponsors">
+          <tr><td colspan="5" class="sub">Chargement des parrains…</td></tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
 
@@ -125,10 +167,12 @@ const $ = s => document.querySelector(s);
 
 let adminKey = localStorage.getItem('tivione.adminKey') || '';
 let allClients = [];
+let allSponsors = [];
 let serverNow = Date.now();
 
 const fmtDate = ms => ms ? new Date(ms).toLocaleString('fr-FR', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : 'Non activé';
 const fmtPrice = n => n ? Number(n).toLocaleString('fr-FR') + ' F' : '—';
+const fmtMoney = n => Number(n || 0).toLocaleString('fr-FR') + ' F';
 
 function timeAgo(ms) {
   if (!ms) return 'Jamais vu';
@@ -146,6 +190,10 @@ function durationLabel(days) {
   if (days === 180) return '6 Mois (180 j)';
   if (days === 365) return '12 Mois (365 j)';
   return days + ' jours';
+}
+
+function esc(s) {
+  return String(s || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 }
 
 async function fetchDashboard(fromUserClick) {
@@ -174,9 +222,12 @@ async function fetchDashboard(fromUserClick) {
     $('#lErr').textContent = '';
     $('#loginGate').classList.add('hide');
     allClients = data.clients || [];
+    allSponsors = data.sponsors || [];
     serverNow = data.serverNow || Date.now();
     $('#lastUpd').textContent = new Date().toLocaleTimeString('fr-FR');
-    render();
+    renderStats();
+    renderClients();
+    renderSponsors();
   } catch (e) {
     $('#lErr').textContent = 'Erreur réseau : ' + (e && e.message ? e.message : 'connexion impossible');
     $('#loginGate').classList.remove('hide');
@@ -184,21 +235,31 @@ async function fetchDashboard(fromUserClick) {
   }
 }
 
-function render() {
-  const q = $('#search').value.trim().toLowerCase();
-  const f = $('#filterState').value;
-
+function renderStats() {
   let onlineDevs = 0, offlineDevs = 0, actCount = 0, expCount = 0;
   allClients.forEach(c => {
     if (c.active) actCount++; else expCount++;
     (c.devices || []).forEach(d => { if (d.online) onlineDevs++; else offlineDevs++; });
   });
 
+  let pendingTotal = 0, withdrawnTotal = 0;
+  allSponsors.forEach(s => {
+    pendingTotal += Number(s.pendingGains || 0);
+    withdrawnTotal += Number(s.withdrawnTotal || 0);
+  });
+
   $('#stOnline').textContent = onlineDevs;
   $('#stOffline').textContent = offlineDevs;
   $('#stAct').textContent = actCount;
   $('#stExp').textContent = expCount;
-  $('#stTotal').textContent = allClients.length;
+  $('#stPending').textContent = fmtMoney(pendingTotal);
+  $('#stWithdrawn').textContent = fmtMoney(withdrawnTotal);
+  $('#stSponsorsCount').textContent = allSponsors.length;
+}
+
+function renderClients() {
+  const q = $('#searchClients').value.trim().toLowerCase();
+  const f = $('#filterState').value;
 
   const filtered = allClients.filter(c => {
     const hasOnline = (c.devices || []).some(d => d.online);
@@ -211,7 +272,7 @@ function render() {
     return hay.includes(q);
   });
 
-  const tb = $('#tbody');
+  const tb = $('#tbodyClients');
   tb.textContent = '';
   if (!filtered.length) {
     tb.innerHTML = '<tr><td colspan="5" class="sub">Aucun client correspondant à ce filtre.</td></tr>';
@@ -267,8 +328,59 @@ function render() {
   });
 }
 
-function esc(s) {
-  return String(s || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+function renderSponsors() {
+  const q = $('#searchSponsors').value.trim().toLowerCase();
+  const f = $('#filterSponsorPay').value;
+
+  const filtered = allSponsors.filter(s => {
+    if (f === 'has_pending' && !(Number(s.pendingGains) > 0)) return false;
+    if (f === 'has_withdrawn' && !(Number(s.withdrawnTotal) > 0)) return false;
+    if (!q) return true;
+    const fillNames = (s.filleuls || []).map(fl => `${fl.username} ${fl.code}`).join(' ');
+    const hay = `${s.username} ${s.code} ${fillNames}`.toLowerCase();
+    return hay.includes(q);
+  });
+
+  const tb = $('#tbodySponsors');
+  tb.textContent = '';
+  if (!filtered.length) {
+    tb.innerHTML = '<tr><td colspan="5" class="sub">Aucun parrain trouvé pour ce filtre.</td></tr>';
+    return;
+  }
+
+  filtered.forEach(s => {
+    const tr = document.createElement('tr');
+
+    const td1 = document.createElement('td');
+    td1.innerHTML = `<b>${esc(s.username)}</b><div class="mono" style="color:var(--fo)">${esc(s.code)}</div>`;
+
+    const td2 = document.createElement('td');
+    td2.innerHTML = `<b style="font-size:18px">${Number(s.filleulsCount || 0)}</b> <span class="sub">filleul(s)</span>`;
+
+    const td3 = document.createElement('td');
+    td3.innerHTML = `<b style="color:var(--fo);font-size:16px">${fmtMoney(s.pendingGains)}</b><div class="sub">Total généré : ${fmtMoney(s.totalGenerated)}</div>`;
+
+    const td4 = document.createElement('td');
+    td4.innerHTML = Number(s.withdrawnTotal) > 0
+      ? `<span class="badge paid">Retiré : ${fmtMoney(s.withdrawnTotal)}</span>`
+      : `<span class="sub">0 F retiré</span>`;
+
+    const td5 = document.createElement('td');
+    const chips = (s.filleuls || []).map(fl =>
+      `<span class="fill-chip"><b>${esc(fl.username)}</b> (${durationLabel(fl.days)}) · <b>${fmtMoney(fl.commission)}</b> · ${fl.withdrawn ? '<span style="color:#93c5fd">Payé</span>' : '<span style="color:var(--fo)">À payer</span>'}</span>`
+    ).join('');
+    td5.innerHTML = `<div class="fill-list">${chips || '<span class="sub">Aucun détail</span>'}</div>`;
+
+    tr.append(td1, td2, td3, td4, td5);
+    tb.appendChild(tr);
+  });
+}
+
+function setTab(tab) {
+  $('#tabClients').classList.toggle('active', tab === 'clients');
+  $('#tabSponsors').classList.toggle('active', tab === 'sponsors');
+  $('#sectionClients').classList.toggle('hide', tab !== 'clients');
+  $('#sectionSponsors').classList.toggle('hide', tab !== 'sponsors');
 }
 
 function triggerLogin() {
@@ -282,6 +394,8 @@ function triggerLogin() {
   fetchDashboard(true);
 }
 
+$('#tabClients').addEventListener('click', () => setTab('clients'));
+$('#tabSponsors').addEventListener('click', () => setTab('sponsors'));
 $('#loginBtn').addEventListener('click', triggerLogin);
 $('#adminCode').addEventListener('keydown', e => { if (e.key === 'Enter') triggerLogin(); });
 $('#refreshBtn').addEventListener('click', () => fetchDashboard(false));
@@ -291,8 +405,10 @@ $('#logoutBtn').addEventListener('click', () => {
   $('#lErr').textContent = '';
   $('#loginGate').classList.remove('hide');
 });
-$('#search').addEventListener('input', render);
-$('#filterState').addEventListener('change', render);
+$('#searchClients').addEventListener('input', renderClients);
+$('#filterState').addEventListener('change', renderClients);
+$('#searchSponsors').addEventListener('input', renderSponsors);
+$('#filterSponsorPay').addEventListener('change', renderSponsors);
 
 if (adminKey) {
   $('#adminCode').value = adminKey;
